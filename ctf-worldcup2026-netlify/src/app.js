@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const challengeRoutes = require('./routes/challenges');
 const scoreboardRoutes = require('./routes/scoreboard');
 const profileRoutes = require('./routes/profile');
+const announcementRoutes = require('./routes/announcements');
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/scoreboard', scoreboardRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Khi chạy local (node server.js) mới cần tự serve static; trên Netlify,
 // Netlify tự serve thư mục public/ nên các route này không được gọi tới.
