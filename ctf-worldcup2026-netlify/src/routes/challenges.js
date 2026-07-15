@@ -11,6 +11,18 @@ const { uploadChallengeFile, getSignedDownloadUrl, deleteChallengeFile } = requi
 
 const router = express.Router();
 
+// Giờ mở giải, dùng ĐỒNG HỒ SERVER (không tin thời gian client gửi lên).
+// Đổi ở đây nếu cần dời ngày — nhớ giữ khớp với UNLOCK_AT bên app.js (chỉ để hiển thị đếm ngược).
+const UNLOCK_AT = new Date('2026-07-25T00:00:00');
+function isUnlocked() {
+  return Date.now() >= UNLOCK_AT.getTime();
+}
+
+function requireAdmin(req, res, next) {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Chỉ admin mới được thực hiện thao tác này' });
+  next();
+}
+
 // Netlify Functions không có ổ đĩa bền -> nhận file vào bộ nhớ (buffer) rồi
 // đẩy thẳng lên Supabase Storage, không ghi ra filesystem cục bộ.
 const upload = multer({
@@ -35,27 +47,37 @@ function cleanText(str, maxLen) {
 // ---- Danh sách challenge (không bao giờ trả flag_hash/flag_salt ra ngoài) ----
 router.get('/', requireAuth, async (req, res, next) => {
   try {
+    // Trước giờ mở giải: user thường không thấy gì; admin chỉ thấy bài của chính mình
+    // (kể cả metadata như title/category), tuyệt đối không thấy bài của admin khác.
+    if (!isUnlocked() && req.user.role !== 'admin') {
+      return res.json({ challenges: [], locked: true, unlockAt: UNLOCK_AT.toISOString() });
+    }
+
+    const ownOnlyClause = !isUnlocked() ? 'AND c.created_by = $2' : '';
+    const params = !isUnlocked() ? [req.user.uid, req.user.uid] : [req.user.uid];
+
     const rows = await query(
       `SELECT c.id, c.title, c.description, c.category, c.points, c.difficulty,
-              c.file_name, c.created_at, u.display_name AS author,
+              c.file_name, c.created_at, c.created_by, u.display_name AS author, u.username AS author_username,
               EXISTS(SELECT 1 FROM solves s WHERE s.challenge_id = c.id AND s.user_id = $1) AS solved,
               (SELECT COUNT(*) FROM solves s2 WHERE s2.challenge_id = c.id) AS solve_count
        FROM challenges c
        JOIN users u ON u.id = c.created_by
-       WHERE c.is_visible = true
+       WHERE c.is_visible = true ${ownOnlyClause}
        ORDER BY c.created_at DESC`,
-      [req.user.uid]
+      params
     );
-    res.json({ challenges: rows });
+    res.json({ challenges: rows, locked: !isUnlocked(), unlockAt: UNLOCK_AT.toISOString() });
   } catch (e) {
     next(e);
   }
 });
 
-// ---- Tạo challenge mới: BẤT KỲ thành viên nào cũng được add ----
+// ---- Tạo challenge mới: CHỈ ADMIN ----
 router.post(
   '/',
   requireAuth,
+  requireAdmin,
   upload.single('file'),
   [
     body('title').custom((v) => cleanText(v, 120).length >= 3).withMessage('Tiêu đề tối thiểu 3 ký tự'),
@@ -103,8 +125,17 @@ router.post(
 // ---- Tải file đính kèm: tạo signed URL có hạn 5 phút từ Supabase Storage ----
 router.get('/:id/file', requireAuth, async (req, res, next) => {
   try {
-    const chall = await queryOne('SELECT file_path, file_name FROM challenges WHERE id = $1', [req.params.id]);
+    const chall = await queryOne(
+      'SELECT file_path, file_name, created_by FROM challenges WHERE id = $1 AND is_visible = true',
+      [req.params.id]
+    );
     if (!chall || !chall.file_path) return res.status(404).json({ error: 'Không có file' });
+
+    if (!isUnlocked()) {
+      const isOwner = chall.created_by === req.user.uid;
+      if (!isOwner) return res.status(403).json({ error: 'Challenge chưa được mở' });
+    }
+
     const url = await getSignedDownloadUrl(chall.file_path);
     res.redirect(url);
   } catch (e) {
@@ -125,6 +156,10 @@ router.post(
 
       const chall = await queryOne('SELECT * FROM challenges WHERE id = $1 AND is_visible = true', [req.params.id]);
       if (!chall) return res.status(404).json({ error: 'Không tìm thấy challenge' });
+
+      if (!isUnlocked() && chall.created_by !== req.user.uid) {
+        return res.status(403).json({ error: 'Challenge chưa được mở' });
+      }
 
       const already = await queryOne('SELECT 1 FROM solves WHERE user_id = $1 AND challenge_id = $2', [
         req.user.uid,

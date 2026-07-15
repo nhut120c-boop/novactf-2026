@@ -5,6 +5,16 @@ const state = {
   activeChallengeId: null,
 };
 
+// Thời điểm mở giải — dùng chung cho countdown VÀ logic khóa/mở challenge.
+// LƯU Ý QUAN TRỌNG: đây chỉ là hiển thị. Việc khóa thật sự (không cho tải file,
+// không cho submit flag, không cho admin xem bài của admin khác) BẮT BUỘC phải
+// được kiểm tra ở server, vì ai cũng có thể gọi thẳng API mà bỏ qua giao diện này.
+const UNLOCK_AT = '2026-07-25T00:00:00';
+
+function isUnlocked() {
+  return Date.now() >= new Date(UNLOCK_AT).getTime();
+}
+
 // điểm động: challenge càng nhiều solve càng giảm điểm, không bao giờ thấp hơn "minimum"
 // công thức parabol kiểu CTFd: value = ((min - initial)/decay^2) * solves^2 + initial
 const SCORING = {
@@ -43,12 +53,6 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.remove('hidden');
   setTimeout(() => t.classList.add('hidden'), 2600);
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 // ---------------- AUTH ----------------
@@ -103,11 +107,10 @@ function onAuthSuccess(user) {
   document.getElementById('user-name').textContent = user.displayName;
   document.getElementById('open-add-chall').classList.toggle('hidden', user.role !== 'admin');
   initApp();
-  startCountdown('2026-07-25T00:00:00');
+  startCountdown(UNLOCK_AT);
 }
 
 // ---------------- COUNTDOWN ----------------
-// đổi deadline ở đây nếu cần dời ngày, định dạng ISO local time
 function startCountdown(deadlineStr) {
   const deadline = new Date(deadlineStr).getTime();
   const banner = document.getElementById('countdown-banner');
@@ -117,9 +120,14 @@ function startCountdown(deadlineStr) {
   function tick() {
     const diff = deadline - Date.now();
     if (diff <= 0) {
-      timerEl.textContent = 'Đã kết thúc';
+      timerEl.textContent = 'Giải đã mở!';
       banner.classList.add('ended');
       clearInterval(state._countdownHandle);
+      // Vừa chuyển sang mở giải -> tự làm mới danh sách challenge, không cần F5 thủ công.
+      const challengesView = document.getElementById('view-challenges');
+      if (challengesView && !challengesView.classList.contains('hidden')) {
+        loadChallenges();
+      }
       return;
     }
     const d = Math.floor(diff / 86400000);
@@ -158,6 +166,9 @@ function switchView(view) {
   if (view === 'profile') loadProfile();
 }
 
+// Sau khi mở giải, nếu người dùng đang ở tab challenges thì tab đó tự loadChallenges()
+// lại (xử lý trong startCountdown ở trên); switchView() ở đây chỉ lo phần điều hướng.
+
 function initApp() {
   switchView('rules');
 }
@@ -165,13 +176,50 @@ function initApp() {
 // ---------------- CHALLENGES ----------------
 async function loadChallenges() {
   const data = await api('/challenges');
+  const unlocked = isUnlocked();
+
+  // Chỉ để UI phản ánh đúng trạng thái — server (/api/challenges) PHẢI tự lọc
+  // theo đúng luật này (xem ghi chú ở cuối file), vì client-side filter ở đây
+  // chỉ ẩn trên giao diện, không ngăn được ai gọi thẳng API.
+  let visible = data.challenges;
+  if (!unlocked) {
+    visible = state.user.role === 'admin'
+      ? data.challenges.filter((c) => c.author_username === state.user.username)
+      : [];
+  }
+
   // nếu backend tự tính điểm động thì gán c.dynamic = false để giữ nguyên c.points
-  state.challenges = data.challenges.map((c) => ({
+  state.challenges = visible.map((c) => ({
     ...c,
     displayPoints: c.dynamic === false ? c.points : calcDynamicPoints(c.points, c.solve_count || 0),
   }));
+
+  renderLockBanner(unlocked, data.challenges.length);
   renderCategories();
   renderChallenges();
+}
+
+function renderLockBanner(unlocked, totalCount) {
+  let banner = document.getElementById('challenges-lock-notice');
+  const grid = document.getElementById('challenge-grid');
+  if (!banner) {
+    banner = document.createElement('p');
+    banner.id = 'challenges-lock-notice';
+    banner.style.color = 'white';
+    grid.parentNode.insertBefore(banner, grid);
+  }
+  if (unlocked) {
+    banner.classList.add('hidden');
+    return;
+  }
+  banner.classList.remove('hidden');
+  if (state.user.role === 'admin') {
+    banner.textContent = totalCount > 0
+      ? '🔒 Giải chưa mở. Bạn chỉ thấy các challenge do chính bạn tạo, không thấy bài của admin khác.'
+      : '🔒 Giải chưa mở. Bạn chưa tạo challenge nào.';
+  } else {
+    banner.textContent = '🔒 Challenge sẽ được mở khi đồng hồ đếm ngược về 0. Quay lại sau nhé!';
+  }
 }
 
 function renderCategories() {
