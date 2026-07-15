@@ -150,6 +150,7 @@
     <p class="modal-meta" id="modal-meta"></p>
     <p id="modal-desc" class="modal-desc"></p>
     <a id="modal-file" class="file-link hidden" href="#">📎 Tải file đính kèm</a>
+    <a id="modal-link" class="file-link hidden" href="#" target="_blank" rel="noopener noreferrer">🔗 Mở link challenge</a>
     <form id="submit-flag-form">
       <input type="text" id="flag-input" placeholder="NVR{...}" autocomplete="off" required />
       <button type="submit" class="btn-primary">🚩 Submit</button>
@@ -184,6 +185,7 @@
       <label class="file-label">📎 File đính kèm (không bắt buộc)
         <input type="file" id="c-file" />
       </label>
+      <input type="url" id="c-link" placeholder="Hoặc dán link (nếu file quá lớn / xài link ngoài) — không bắt buộc" maxlength="500" />
       <input type="text" id="c-flag" placeholder="Flag đáp án" required />
       <button type="submit" class="btn-primary">Deploy 🚀</button>
       <div class="form-error" id="add-chall-error"></div>

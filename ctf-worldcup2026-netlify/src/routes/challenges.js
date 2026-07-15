@@ -58,7 +58,7 @@ router.get('/', requireAuth, async (req, res, next) => {
 
     const rows = await query(
       `SELECT c.id, c.title, c.description, c.category, c.points, c.difficulty,
-              c.file_name, c.created_at, c.created_by, u.display_name AS author, u.username AS author_username,
+              c.file_name, c.link, c.created_at, c.created_by, u.display_name AS author, u.username AS author_username,
               EXISTS(SELECT 1 FROM solves s WHERE s.challenge_id = c.id AND s.user_id = $1) AS solved,
               (SELECT COUNT(*) FROM solves s2 WHERE s2.challenge_id = c.id) AS solve_count
        FROM challenges c
@@ -85,6 +85,11 @@ router.post(
     body('category').custom((v) => cleanText(v, 40).length >= 2).withMessage('Chọn category'),
     body('points').isInt({ min: 10, max: 1000 }).withMessage('Điểm từ 10-1000'),
     body('flag').isLength({ min: 3, max: 256 }).withMessage('Flag không hợp lệ'),
+    body('link')
+      .optional({ checkFalsy: true })
+      .isURL({ protocols: ['http', 'https'], require_protocol: true })
+      .withMessage('Link không hợp lệ (phải bắt đầu bằng http:// hoặc https://)')
+      .isLength({ max: 500 }),
   ],
   async (req, res, next) => {
     try {
@@ -96,6 +101,7 @@ router.post(
       const category = cleanText(req.body.category, 40);
       const difficulty = ['easy', 'medium', 'hard'].includes(req.body.difficulty) ? req.body.difficulty : 'medium';
       const points = parseInt(req.body.points, 10);
+      const link = req.body.link ? cleanText(req.body.link, 500) : null;
 
       // Băm flag ngay lập tức, KHÔNG bao giờ lưu / log plaintext flag ở bất kỳ đâu.
       const { salt, hash } = hashFlag(req.body.flag);
@@ -109,9 +115,9 @@ router.post(
 
       const inserted = await queryOne(
         `INSERT INTO challenges
-           (title, description, category, points, difficulty, flag_salt, flag_hash, file_path, file_name, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-        [title, description, category, points, difficulty, salt, hash, filePath, fileName, req.user.uid]
+           (title, description, category, points, difficulty, flag_salt, flag_hash, file_path, file_name, link, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+        [title, description, category, points, difficulty, salt, hash, filePath, fileName, link, req.user.uid]
       );
 
       res.json({ ok: true, id: inserted.id });

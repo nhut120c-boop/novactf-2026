@@ -278,6 +278,13 @@ function openChallengeModal(c) {
   } else {
     fileLink.classList.add('hidden');
   }
+  const linkEl = document.getElementById('modal-link');
+  if (c.link) {
+    linkEl.classList.remove('hidden');
+    linkEl.href = c.link;
+  } else {
+    linkEl.classList.add('hidden');
+  }
   document.getElementById('flag-input').value = '';
   const resultBox = document.getElementById('submit-result');
   resultBox.textContent = '';
@@ -325,6 +332,8 @@ document.getElementById('add-chall-form').addEventListener('submit', async (e) =
   fd.append('points', document.getElementById('c-points').value);
   fd.append('description', document.getElementById('c-desc').value);
   fd.append('flag', document.getElementById('c-flag').value);
+  const linkVal = document.getElementById('c-link').value.trim();
+  if (linkVal) fd.append('link', linkVal);
   const fileInput = document.getElementById('c-file');
   if (fileInput.files[0]) fd.append('file', fileInput.files[0]);
 
@@ -427,3 +436,29 @@ document.getElementById('password-form').addEventListener('submit', async (e) =>
 
 // ---------------- INIT ----------------
 checkSession();
+
+/*
+ * ============================================================
+ * VIỆC BẮT BUỘC PHẢI LÀM Ở BACKEND (frontend không tự bảo mật được):
+ * ============================================================
+ * 1. GET /api/challenges
+ *    - Nếu now < UNLOCK_AT (2026-07-25T00:00:00) VÀ user không phải admin
+ *      -> trả về mảng rỗng (không trả cả metadata, kể cả title/category).
+ *    - Nếu now < UNLOCK_AT VÀ user là admin
+ *      -> chỉ trả các challenge có created_by = user hiện tại.
+ *    - Nếu now >= UNLOCK_AT -> trả tất cả cho mọi user như bình thường.
+ *
+ * 2. GET /api/challenges/:id/file  (tải file đính kèm)
+ *    - Áp đúng luật như trên: chặn 403 nếu chưa unlock và (không phải admin
+ *      HOẶC là admin nhưng không phải chủ challenge đó).
+ *
+ * 3. POST /api/challenges/:id/submit (nộp flag)
+ *    - Cũng chặn 403 theo luật như trên. Đừng chỉ dựa vào việc ẩn nút ở UI.
+ *
+ * 4. POST /api/challenges (tạo challenge)
+ *    - Chỉ role admin được gọi (kiểm tra session, không tin req.body.role).
+ *
+ * 5. So sánh thời gian nên dùng giờ server (server-side clock), không tin
+ *    thời gian client gửi lên, để tránh user chỉnh đồng hồ máy để mở khóa sớm.
+ * ============================================================
+ */
