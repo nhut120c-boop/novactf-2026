@@ -103,6 +103,36 @@ function onAuthSuccess(user) {
   document.getElementById('user-name').textContent = user.displayName;
   document.getElementById('open-add-chall').classList.toggle('hidden', user.role !== 'admin');
   initApp();
+  startCountdown('2026-07-25T00:00:00');
+}
+
+// ---------------- COUNTDOWN ----------------
+// đổi deadline ở đây nếu cần dời ngày, định dạng ISO local time
+function startCountdown(deadlineStr) {
+  const deadline = new Date(deadlineStr).getTime();
+  const banner = document.getElementById('countdown-banner');
+  const timerEl = document.getElementById('countdown-timer');
+  if (!timerEl) return;
+
+  function tick() {
+    const diff = deadline - Date.now();
+    if (diff <= 0) {
+      timerEl.textContent = 'Đã kết thúc';
+      banner.classList.add('ended');
+      clearInterval(state._countdownHandle);
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const pad = (n) => String(n).padStart(2, '0');
+    timerEl.textContent = `${d} ngày ${pad(h)}:${pad(m)}:${pad(s)}`;
+  }
+
+  clearInterval(state._countdownHandle);
+  tick();
+  state._countdownHandle = setInterval(tick, 1000);
 }
 
 async function checkSession() {

@@ -6,6 +6,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>NovaCTF 🚀</title>
 <link rel="stylesheet" href="/css/style.css" />
+<style>
+  .countdown-banner {
+    text-align: center;
+    padding: 8px 12px;
+    font-weight: 600;
+    background: linear-gradient(90deg, #1e1b4b, #4c1d95);
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .countdown-banner.ended { background: #7f1d1d; }
+  #countdown-timer { font-variant-numeric: tabular-nums; }
+</style>
 </head>
 <body>
 
@@ -52,6 +64,10 @@
       <button id="logout-btn" title="Đăng xuất">🚪</button>
     </div>
   </header>
+
+  <div id="countdown-banner" class="countdown-banner">
+    ⏳ Thời gian còn lại: <span id="countdown-timer">--:--:--:--</span>
+  </div>
 
   <main class="content">
 
