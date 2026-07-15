@@ -9,7 +9,7 @@ const state = {
 // LƯU Ý QUAN TRỌNG: đây chỉ là hiển thị. Việc khóa thật sự (không cho tải file,
 // không cho submit flag, không cho admin xem bài của admin khác) BẮT BUỘC phải
 // được kiểm tra ở server, vì ai cũng có thể gọi thẳng API mà bỏ qua giao diện này.
-const UNLOCK_AT = '2026-07-25T00:00:00';
+const UNLOCK_AT = '2026-07-21T08:00:00+07:00';
 
 function isUnlocked() {
   return Date.now() >= new Date(UNLOCK_AT).getTime();

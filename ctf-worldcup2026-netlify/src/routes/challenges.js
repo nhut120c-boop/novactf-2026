@@ -13,7 +13,7 @@ const router = express.Router();
 
 // Giờ mở giải, dùng ĐỒNG HỒ SERVER (không tin thời gian client gửi lên).
 // Đổi ở đây nếu cần dời ngày — nhớ giữ khớp với UNLOCK_AT bên app.js (chỉ để hiển thị đếm ngược).
-const UNLOCK_AT = new Date('2026-07-25T00:00:00');
+const UNLOCK_AT = new Date('2026-07-21T08:00:00+07:00');
 function isUnlocked() {
   return Date.now() >= UNLOCK_AT.getTime();
 }
