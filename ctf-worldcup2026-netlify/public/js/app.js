@@ -106,6 +106,7 @@ function onAuthSuccess(user) {
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('user-name').textContent = user.displayName;
   document.getElementById('open-add-chall').classList.toggle('hidden', user.role !== 'admin');
+  document.getElementById('open-add-announcement').classList.toggle('hidden', user.role !== 'admin');
   initApp();
   startCountdown(UNLOCK_AT);
 }
@@ -197,7 +198,92 @@ async function loadChallenges() {
   renderLockBanner(unlocked, data.challenges.length);
   renderCategories();
   renderChallenges();
+  loadAnnouncements();
 }
+
+async function loadAnnouncements() {
+  try {
+    const data = await api('/announcements');
+    renderAnnouncements(data.announcements);
+    if (state.user.role === 'admin') populateAnnouncementChallengeSelect();
+  } catch (e) {
+    // im lặng nếu lỗi, không chặn trang challenges
+  }
+}
+
+function renderAnnouncements(list) {
+  const box = document.getElementById('announcement-list');
+  box.innerHTML = '';
+  list.forEach((a) => {
+    const card = document.createElement('div');
+    card.className = 'announcement-card';
+    card.innerHTML = `
+      <span class="ann-tag"></span>
+      <div class="ann-msg"></div>
+    `;
+    card.querySelector('.ann-tag').textContent = a.challenge_id
+      ? `🔎 Hint: ${a.challenge_title || 'challenge'}`
+      : '📢 Thông báo chung';
+    card.querySelector('.ann-msg').textContent = a.message;
+    if (state.user.role === 'admin') {
+      const delBtn = document.createElement('button');
+      delBtn.className = 'ann-del';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Xóa (chỉ xóa được thông báo do bạn đăng)';
+      delBtn.onclick = async () => {
+        try {
+          await api(`/announcements/${a.id}`, { method: 'DELETE' });
+          loadAnnouncements();
+        } catch (e) {
+          showToast(e.message);
+        }
+      };
+      card.appendChild(delBtn);
+    }
+    box.appendChild(card);
+  });
+}
+
+function populateAnnouncementChallengeSelect() {
+  const sel = document.getElementById('ann-challenge');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">🌐 Thông báo chung (toàn giải)</option>';
+  // state.challenges lúc này (trước unlock) đã chỉ chứa bài của chính admin này rồi
+  state.challenges.forEach((c) => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = `🔎 Hint cho: ${c.title}`;
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
+document.getElementById('open-add-announcement').onclick = () => {
+  document.getElementById('add-announcement-modal').classList.remove('hidden');
+};
+document.getElementById('add-announcement-modal-close').onclick = () =>
+  document.getElementById('add-announcement-modal').classList.add('hidden');
+
+document.getElementById('add-announcement-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errBox = document.getElementById('add-announcement-error');
+  errBox.textContent = '';
+  const message = document.getElementById('ann-message').value;
+  const challengeId = document.getElementById('ann-challenge').value || undefined;
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+  try {
+    await api('/announcements', { method: 'POST', body: { message, challengeId } });
+    document.getElementById('add-announcement-modal').classList.add('hidden');
+    document.getElementById('add-announcement-form').reset();
+    showToast('📢 Đã đăng thông báo!');
+    loadAnnouncements();
+  } catch (e) {
+    errBox.textContent = e.message;
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+});
 
 function renderLockBanner(unlocked, totalCount) {
   let banner = document.getElementById('challenges-lock-notice');
