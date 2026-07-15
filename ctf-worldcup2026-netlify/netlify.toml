@@ -1,0 +1,19 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "npm install"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback: mọi route khác trả về index.html (app tự xử lý điều hướng bằng JS)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

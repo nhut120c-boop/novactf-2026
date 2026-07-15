@@ -1,0 +1,25 @@
+{
+  "name": "ctf-worldcup2026-netlify",
+  "version": "1.0.0",
+  "description": "Internal CTF platform - World Cup 2026 theme (Netlify + Supabase edition)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "express-validator": "^7.2.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "pg": "^8.13.0",
+    "sanitize-html": "^2.13.0",
+    "serverless-http": "^3.2.0"
+  }
+}
