@@ -235,3 +235,47 @@ body {
   font-size: 15px; font-weight: 600; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   border: 1px solid var(--gold-dark);
 }
+/* =========================================
+   1. FIX LỖI GIAO DIỆN FORM THÊM CHALLENGE
+   ========================================= */
+#add-chall-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+#add-chall-form input,
+#add-chall-form select,
+#add-chall-form textarea {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1.5px solid #2a3449;
+  background: rgba(0,0,0,0.3);
+  color: var(--ink);
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+#add-chall-form input:focus,
+#add-chall-form select:focus,
+#add-chall-form textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+#add-chall-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* =========================================
+   2. TỐI ƯU CHỐNG LAG GPU
+   ========================================= */
+.brand {
+  /* Tắt hiệu ứng nhấp nháy đổ bóng liên tục */
+  animation: none !important; 
+}
