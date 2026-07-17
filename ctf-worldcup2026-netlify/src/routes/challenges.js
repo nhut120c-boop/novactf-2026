@@ -12,11 +12,25 @@ const { uploadChallengeFile, getSignedDownloadUrl, deleteChallengeFile } = requi
 const router = express.Router();
 
 // Giờ mở giải, dùng ĐỒNG HỒ SERVER (không tin thời gian client gửi lên).
-// Đổi ở đây nếu cần dời ngày — nhớ giữ khớp với UNLOCK_AT bên app.js (chỉ để hiển thị đếm ngược).
+// Đổi ở đây nếu cần dời ngày — nhớ giữ khớp với UNLOCK_AT/CONTEST_END bên
+// app.js, announcements.js, và bot-solver.js (nếu có dùng).
 const UNLOCK_AT = new Date('2026-07-21T08:00:00+07:00');
+const CONTEST_END = new Date('2026-07-23T00:00:00+07:00');
+
 function isUnlocked() {
   return Date.now() >= UNLOCK_AT.getTime();
 }
+function isEnded() {
+  return Date.now() >= CONTEST_END.getTime();
+}
+// Trước giờ mở: user thường luôn bị chặn; admin chỉ được nếu là CHỦ challenge đó.
+function isPreStartBlocked(role, isOwner) {
+  if (role === 'admin') return !isOwner;
+  return true;
+}
+// Lưu ý: sau CONTEST_END, KHÔNG chặn nộp flag/tải file — vẫn cho làm tự do,
+// chỉ là điểm số từ lúc này trở đi sẽ không được tính vào bảng xếp hạng
+// (xử lý ở routes/scoreboard.js và routes/profile.js, lọc theo solved_at < CONTEST_END).
 
 function requireAdmin(req, res, next) {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Chỉ admin mới được thực hiện thao tác này' });
@@ -67,7 +81,13 @@ router.get('/', requireAuth, async (req, res, next) => {
        ORDER BY c.created_at DESC`,
       params
     );
-    res.json({ challenges: rows, locked: !isUnlocked(), unlockAt: UNLOCK_AT.toISOString() });
+    res.json({
+      challenges: rows,
+      locked: !isUnlocked(),
+      unlockAt: UNLOCK_AT.toISOString(),
+      contestEnd: CONTEST_END.toISOString(),
+      ended: isEnded(),
+    });
   } catch (e) {
     next(e);
   }
@@ -137,9 +157,9 @@ router.get('/:id/file', requireAuth, async (req, res, next) => {
     );
     if (!chall || !chall.file_path) return res.status(404).json({ error: 'Không có file' });
 
-    if (!isUnlocked()) {
-      const isOwner = chall.created_by === req.user.uid;
-      if (!isOwner) return res.status(403).json({ error: 'Challenge chưa được mở' });
+    const isOwner = chall.created_by === req.user.uid;
+    if (!isUnlocked() && isPreStartBlocked(req.user.role, isOwner)) {
+      return res.status(403).json({ error: 'Challenge chưa được mở' });
     }
 
     const url = await getSignedDownloadUrl(chall.file_path);

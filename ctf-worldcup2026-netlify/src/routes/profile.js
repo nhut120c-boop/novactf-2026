@@ -6,6 +6,9 @@ const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Phải khớp CONTEST_END bên routes/challenges.js.
+const CONTEST_END = new Date('2026-07-23T00:00:00+07:00');
+
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const user = await queryOne(
@@ -14,18 +17,21 @@ router.get('/', requireAuth, async (req, res, next) => {
     );
     if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
 
+    // Điểm chính thức: chỉ tính solve trước CONTEST_END.
     const scoreRow = await queryOne(
       `SELECT COALESCE(SUM(c.points),0)::int AS score, COUNT(*)::int AS solved_count
        FROM solves s JOIN challenges c ON c.id = s.challenge_id
-       WHERE s.user_id = $1`,
-      [user.id]
+       WHERE s.user_id = $1 AND s.solved_at < $2`,
+      [user.id, CONTEST_END]
     );
 
+    // Danh sách hiển thị cho chính chủ: vẫn show TẤT CẢ (kể cả solve sau giờ kết thúc,
+    // để họ theo dõi tiến độ "luyện tập"), nhưng đánh dấu counted=false cho phần không tính điểm.
     const solved = await query(
-      `SELECT c.id, c.title, c.category, c.points, s.solved_at
+      `SELECT c.id, c.title, c.category, c.points, s.solved_at, (s.solved_at < $2) AS counted
        FROM solves s JOIN challenges c ON c.id = s.challenge_id
        WHERE s.user_id = $1 ORDER BY s.solved_at DESC`,
-      [user.id]
+      [user.id, CONTEST_END]
     );
 
     const created = await query(
@@ -55,18 +61,21 @@ router.get('/view/:username', requireAuth, async (req, res, next) => {
     );
     if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
 
+    // Điểm công khai cũng chỉ tính solve trước CONTEST_END, khớp với scoreboard.
     const scoreRow = await queryOne(
       `SELECT COALESCE(SUM(c.points),0)::int AS score, COUNT(*)::int AS solved_count
        FROM solves s JOIN challenges c ON c.id = s.challenge_id
-       WHERE s.user_id = $1`,
-      [user.id]
+       WHERE s.user_id = $1 AND s.solved_at < $2`,
+      [user.id, CONTEST_END]
     );
 
+    // Danh sách bài đã giải hiện công khai: chỉ nên show phần ĐƯỢC TÍNH ĐIỂM
+    // (tránh lộ ra rằng người đó có "solve luyện tập" sau giờ kết thúc — không cần thiết cho người ngoài xem).
     const solved = await query(
       `SELECT c.id, c.title, c.category, c.points, s.solved_at
        FROM solves s JOIN challenges c ON c.id = s.challenge_id
-       WHERE s.user_id = $1 ORDER BY s.solved_at DESC`,
-      [user.id]
+       WHERE s.user_id = $1 AND s.solved_at < $2 ORDER BY s.solved_at DESC`,
+      [user.id, CONTEST_END]
     );
 
     res.json({

@@ -10,9 +10,13 @@ const state = {
 // không cho submit flag, không cho admin xem bài của admin khác) BẮT BUỘC phải
 // được kiểm tra ở server, vì ai cũng có thể gọi thẳng API mà bỏ qua giao diện này.
 const UNLOCK_AT = '2026-07-21T08:00:00+07:00';
+const CONTEST_END = '2026-07-23T00:00:00+07:00';
 
 function isUnlocked() {
   return Date.now() >= new Date(UNLOCK_AT).getTime();
+}
+function isContestEnded() {
+  return Date.now() >= new Date(CONTEST_END).getTime();
 }
 
 // điểm động: challenge càng nhiều solve càng giảm điểm, không bao giờ thấp hơn "minimum"
@@ -120,6 +124,7 @@ function startCountdown(deadlineStr) {
 
   function tick() {
     const diff = deadline - Date.now();
+    updateFullLockOverlay(diff);
     if (diff <= 0) {
       timerEl.textContent = 'Giải đã mở!';
       banner.classList.add('ended');
@@ -142,6 +147,23 @@ function startCountdown(deadlineStr) {
   clearInterval(state._countdownHandle);
   tick();
   state._countdownHandle = setInterval(tick, 1000);
+}
+
+// Banner full-màn-hình che hết mọi thứ với member cho tới UNLOCK_AT.
+// Admin luôn bỏ qua overlay này để còn vào quản lý/test trước giờ mở.
+function updateFullLockOverlay(diff) {
+  const overlay = document.getElementById('full-lock-overlay');
+  if (!overlay) return;
+  const shouldShow = state.user && state.user.role !== 'admin' && diff > 0;
+  overlay.classList.toggle('hidden', !shouldShow);
+  if (!shouldShow) return;
+  const timerEl = document.getElementById('full-lock-timer');
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  const pad = (n) => String(n).padStart(2, '0');
+  timerEl.textContent = `${d} ngày ${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
 async function checkSession() {
@@ -548,8 +570,9 @@ async function loadProfile() {
   data.solved.forEach((s) => {
     const li = document.createElement('li');
     li.innerHTML = `<span></span><span></span>`;
-    li.children[0].textContent = s.title;
+    li.children[0].textContent = s.counted === false ? `${s.title} (luyện tập, không tính điểm)` : s.title;
     li.children[1].textContent = `+${s.points}`;
+    if (s.counted === false) li.style.opacity = '0.55';
     solvedList.appendChild(li);
   });
 

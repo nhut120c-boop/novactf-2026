@@ -48,6 +48,32 @@
     font-size: 14px;
   }
   .announcement-card .ann-del:hover { opacity: 1; }
+  .full-lock-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: radial-gradient(circle at top, #1e1b4b 0%, #0b0a1f 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    padding: 24px;
+  }
+  .full-lock-box { max-width: 480px; }
+  .full-lock-logo { font-size: 40px; margin-bottom: 12px; }
+  .full-lock-box h1 { font-size: 26px; margin-bottom: 10px; }
+  .full-lock-box p { opacity: 0.85; margin-bottom: 20px; line-height: 1.5; }
+  .full-lock-timer {
+    font-size: 32px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,0.08);
+    padding: 14px 20px;
+    border-radius: 14px;
+    letter-spacing: 1px;
+  }
+  .full-lock-overlay.ended .full-lock-timer { background: rgba(255,255,255,0.08); }
   .solvers-section { margin-top: 16px; }
   .solvers-section h4 { margin-bottom: 6px; }
   .solve-time { opacity: 0.6; font-size: 12px; }
@@ -82,6 +108,15 @@
       <button type="submit" class="btn-primary">Tạo tài khoản ⚡</button>
       <div class="form-error" id="register-error"></div>
     </form>
+  </div>
+</div>
+
+<div id="full-lock-overlay" class="full-lock-overlay hidden">
+  <div class="full-lock-box">
+    <div class="full-lock-logo">🌌🛡️🚀</div>
+    <h1>NovaCTF sắp bắt đầu!</h1>
+    <p id="full-lock-msg">Giải sẽ mở lúc <b>08:00 21/07/2026</b>. Quay lại đúng giờ nhé!</p>
+    <div class="full-lock-timer" id="full-lock-timer">--:--:--:--</div>
   </div>
 </div>
 
