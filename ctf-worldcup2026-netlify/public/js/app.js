@@ -377,6 +377,34 @@ function openChallengeModal(c) {
   resultBox.className = 'submit-result';
   if (c.solved) resultBox.textContent = '✅ Bạn đã giải challenge này rồi.';
   document.getElementById('chall-modal').classList.remove('hidden');
+  loadSolvers(c.id);
+}
+
+async function loadSolvers(challengeId) {
+  const listEl = document.getElementById('solvers-list');
+  const countEl = document.getElementById('solvers-count');
+  listEl.innerHTML = '<li>Đang tải...</li>';
+  try {
+    const data = await api(`/challenges/${challengeId}/solvers`);
+    countEl.textContent = data.solvers.length;
+    listEl.innerHTML = '';
+    if (data.solvers.length === 0) {
+      listEl.innerHTML = '<li>Chưa ai giải được bài này</li>';
+      return;
+    }
+    data.solvers.forEach((s) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span></span><span class="solve-time"></span>`;
+      const nameSpan = li.children[0];
+      nameSpan.textContent = `${s.avatar || '⚽'} ${s.display_name}`;
+      nameSpan.className = 'scoreboard-name-link';
+      nameSpan.onclick = () => openUserProfile(s.username);
+      li.children[1].textContent = new Date(s.solved_at).toLocaleString('vi-VN');
+      listEl.appendChild(li);
+    });
+  } catch (e) {
+    listEl.innerHTML = '<li>Không tải được danh sách</li>';
+  }
 }
 
 document.getElementById('chall-modal-close').onclick = () => document.getElementById('chall-modal').classList.add('hidden');
@@ -448,12 +476,47 @@ async function loadScoreboard() {
     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1;
     tr.innerHTML = `<td></td><td></td><td></td><td></td>`;
     tr.children[0].textContent = medal;
-    tr.children[1].textContent = `${row.avatar || '⚽'} ${row.display_name}`;
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'scoreboard-name-link';
+    nameSpan.textContent = `${row.avatar || '⚽'} ${row.display_name}`;
+    nameSpan.onclick = () => openUserProfile(row.username);
+    tr.children[1].appendChild(nameSpan);
     tr.children[2].textContent = row.score;
     tr.children[3].textContent = row.solved_count;
     tbody.appendChild(tr);
   });
 }
+
+// ---------------- XEM PROFILE NGƯỜI KHÁC ----------------
+async function openUserProfile(username) {
+  try {
+    const data = await api(`/profile/view/${encodeURIComponent(username)}`);
+    document.getElementById('vp-avatar').textContent = data.user.avatar || '⚽';
+    document.getElementById('vp-name').textContent = data.user.display_name;
+    document.getElementById('vp-score').textContent = data.score;
+    document.getElementById('vp-solved').textContent = data.solved_count;
+
+    const list = document.getElementById('vp-solved-list');
+    list.innerHTML = '';
+    if (data.solved.length === 0) {
+      list.innerHTML = '<li>Chưa giải challenge nào</li>';
+    } else {
+      data.solved.forEach((s) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span></span><span></span>`;
+        li.children[0].textContent = s.title;
+        li.children[1].textContent = `+${s.points}`;
+        list.appendChild(li);
+      });
+    }
+    document.getElementById('view-profile-modal').classList.remove('hidden');
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+document.getElementById('view-profile-modal-close').onclick = () =>
+  document.getElementById('view-profile-modal').classList.add('hidden');
 
 // ---------------- PROFILE ----------------
 const AVATARS = ['⚽', '🏆', '🥅', '🧤', '🟨', '🟥', '🎽', '🌎', '🦁', '🐐'];

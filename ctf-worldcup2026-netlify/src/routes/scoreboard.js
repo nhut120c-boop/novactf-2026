@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const rows = await query(
-      `SELECT u.id, u.display_name, u.avatar,
+      `SELECT u.id, u.username, u.display_name, u.avatar,
               COALESCE(SUM(c.points), 0)::int AS score,
               COUNT(s.id)::int AS solved_count,
               MAX(s.solved_at) AS last_solve

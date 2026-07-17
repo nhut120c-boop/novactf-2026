@@ -45,6 +45,46 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
+// ---- Xem profile công khai của người khác (điểm, số bài đã giải) ----
+// Không trả về thông tin nhạy cảm (không có password_hash, không có email nếu có, v.v.)
+router.get('/view/:username', requireAuth, async (req, res, next) => {
+  try {
+    const user = await queryOne(
+      'SELECT id, username, display_name, avatar, role, created_at FROM users WHERE username = $1',
+      [req.params.username]
+    );
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
+
+    const scoreRow = await queryOne(
+      `SELECT COALESCE(SUM(c.points),0)::int AS score, COUNT(*)::int AS solved_count
+       FROM solves s JOIN challenges c ON c.id = s.challenge_id
+       WHERE s.user_id = $1`,
+      [user.id]
+    );
+
+    const solved = await query(
+      `SELECT c.id, c.title, c.category, c.points, s.solved_at
+       FROM solves s JOIN challenges c ON c.id = s.challenge_id
+       WHERE s.user_id = $1 ORDER BY s.solved_at DESC`,
+      [user.id]
+    );
+
+    res.json({
+      user: {
+        username: user.username,
+        display_name: user.display_name,
+        avatar: user.avatar,
+        created_at: user.created_at,
+      },
+      score: scoreRow.score,
+      solved_count: scoreRow.solved_count,
+      solved,
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
 router.post(
   '/change-password',
   requireAuth,

@@ -192,6 +192,32 @@ router.post(
 );
 
 // ---- Xóa challenge: chỉ chủ bài hoặc admin ----
+// ---- Danh sách người đã giải + thời gian ----
+router.get('/:id/solvers', requireAuth, async (req, res, next) => {
+  try {
+    const chall = await queryOne(
+      'SELECT id, created_by FROM challenges WHERE id = $1 AND is_visible = true',
+      [req.params.id]
+    );
+    if (!chall) return res.status(404).json({ error: 'Không tìm thấy challenge' });
+
+    if (!isUnlocked() && chall.created_by !== req.user.uid) {
+      return res.status(403).json({ error: 'Challenge chưa được mở' });
+    }
+
+    const rows = await query(
+      `SELECT u.display_name, u.avatar, u.username, s.solved_at
+       FROM solves s JOIN users u ON u.id = s.user_id
+       WHERE s.challenge_id = $1
+       ORDER BY s.solved_at ASC`,
+      [chall.id]
+    );
+    res.json({ solvers: rows });
+  } catch (e) {
+    next(e);
+  }
+});
+
 router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     const chall = await queryOne('SELECT * FROM challenges WHERE id = $1', [req.params.id]);
