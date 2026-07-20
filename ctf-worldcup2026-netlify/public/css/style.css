@@ -56,7 +56,34 @@ body {
   border-bottom: 4px solid var(--sky);
   animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.auth-logo { font-size: 40px; margin-bottom: 4px; }
+.auth-logo { font-size: 40px; margin-bottom: 4px; display: flex; justify-content: center; }
+.auth-logo img {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.55)) drop-shadow(0 0 28px rgba(138, 43, 226, 0.4));
+  animation: logo-pulse-icon 3.5s ease-in-out infinite;
+}
+.full-lock-logo img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.55)) drop-shadow(0 0 28px rgba(138, 43, 226, 0.4));
+  animation: logo-pulse-icon 3.5s ease-in-out infinite;
+}
+.brand img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
+}
+@keyframes logo-pulse-icon {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.45)) drop-shadow(0 0 20px rgba(138, 43, 226, 0.3)); }
+  50% { filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.8)) drop-shadow(0 0 36px rgba(138, 43, 226, 0.55)); }
+}
 .auth-card h1 { margin: 6px 0 0; font-size: 26px; color: var(--ink); font-weight: 800; letter-spacing: 1px;}
 .auth-sub { color: #8c9fb8; margin-top: 4px; margin-bottom: 24px; font-size: 14px;}
 
@@ -278,4 +305,368 @@ body {
 .brand {
   /* Tắt hiệu ứng nhấp nháy đổ bóng liên tục */
   animation: none !important; 
+}
+/* ---------- Background FX: galaxy watermark + starfield ---------- */
+.bg-fx {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-logo-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(65vw, 65vh);
+  height: min(65vw, 65vh);
+  transform: translate(-50%, -50%);
+  background-image: url('/img/logo.jpg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 50%;
+  opacity: 0.10;
+  filter: blur(1.5px) saturate(1.3);
+  animation: logo-pulse 7s ease-in-out infinite;
+}
+
+.bg-logo-glow::before {
+  content: '';
+  position: absolute;
+  inset: -15%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.35), rgba(138, 43, 226, 0.15) 45%, transparent 72%);
+  filter: blur(50px);
+  z-index: -1;
+  animation: logo-pulse 7s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { opacity: 0.08; filter: blur(2px) brightness(1); }
+  50% { opacity: 0.20; filter: blur(1px) brightness(1.35); }
+}
+
+.star-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  border-radius: 50%;
+}
+
+.star-layer.s1 {
+  box-shadow:
+    13.44vw 84.74vh #fff,
+    76.38vw 25.51vh #fff,
+    49.54vw 44.95vh #fff,
+    65.16vw 78.87vh #fff,
+    9.39vw 2.83vh #fff,
+    83.58vw 43.28vh #fff,
+    76.23vw 0.21vh #fff,
+    44.54vw 72.15vh #fff,
+    22.88vw 94.53vh #fff,
+    90.14vw 3.06vh #fff,
+    2.54vw 54.14vh #fff,
+    93.91vw 38.12vh #fff,
+    21.66vw 42.21vh #fff,
+    2.9vw 22.17vh #fff,
+    43.79vw 49.58vh #fff,
+    23.31vw 23.09vh #fff,
+    21.88vw 45.96vh #fff,
+    28.98vw 2.15vh #fff,
+    83.76vw 55.65vh #fff,
+    64.23vw 18.59vh #fff,
+    99.25vw 85.99vh #fff,
+    12.09vw 33.27vh #fff,
+    72.15vw 71.12vh #fff,
+    93.64vw 42.21vh #fff,
+    83.0vw 67.03vh #fff,
+    30.34vw 58.76vh #fff,
+    88.25vw 84.62vh #fff,
+    50.53vw 58.9vh #fff,
+    3.45vw 24.27vh #fff,
+    79.74vw 41.43vh #fff,
+    17.3vw 54.88vh #fff,
+    70.3vw 67.45vh #fff,
+    37.47vw 43.9vh #fff,
+    50.84vw 77.84vh #fff,
+    52.09vw 39.33vh #fff,
+    48.97vw 2.96vh #fff,
+    4.35vw 70.34vh #fff,
+    98.32vw 59.32vh #fff,
+    39.36vw 17.03vh #fff,
+    50.22vw 98.21vh #fff,
+    77.05vw 53.96vh #fff,
+    86.03vw 23.22vh #fff,
+    51.38vw 95.25vh #fff,
+    57.78vw 45.91vh #fff,
+    26.93vw 54.8vh #fff,
+    95.71vw 0.57vh #fff,
+    78.37vw 82.05vh #fff,
+    88.62vw 74.05vh #fff,
+    80.91vw 51.87vh #fff,
+    56.14vw 42.61vh #fff,
+    5.61vw 87.0vh #fff,
+    57.0vw 19.98vh #fff,
+    50.47vw 48.49vh #fff,
+    35.68vw 34.61vh #fff,
+    53.85vw 62.35vh #fff,
+    61.25vw 45.81vh #fff,
+    2.8vw 22.96vh #fff,
+    17.72vw 58.45vh #fff,
+    86.1vw 79.84vh #fff,
+    79.71vw 81.64vh #fff,
+    25.53vw 84.17vh #fff,
+    67.31vw 8.32vh #fff,
+    1.67vw 1.46vh #fff,
+    75.56vw 24.96vh #fff,
+    10.95vw 62.48vh #fff,
+    34.44vw 6.95vh #fff,
+    15.96vw 52.74vh #fff,
+    16.81vw 27.29vh #fff,
+    71.16vw 45.47vh #fff,
+    32.2vw 47.38vh #fff,
+    2.36vw 38.66vh #fff,
+    42.09vw 18.8vh #fff,
+    10.88vw 89.98vh #fff,
+    51.01vw 20.91vh #fff,
+    60.56vw 81.7vh #fff,
+    2.08vw 1.79vh #fff,
+    14.65vw 71.88vh #fff,
+    16.02vw 70.46vh #fff,
+    67.82vw 54.47vh #fff,
+    22.06vw 97.56vh #fff,
+    79.78vw 51.66vh #fff,
+    22.32vw 64.85vh #fff,
+    39.49vw 57.58vh #fff,
+    32.12vw 63.09vh #fff,
+    5.88vw 29.86vh #fff,
+    96.79vw 87.55vh #fff,
+    30.64vw 85.85vh #fff,
+    31.04vw 93.93vh #fff,
+    74.38vw 41.62vh #fff,
+    25.24vw 0.85vh #fff,
+    87.87vw 3.79vh #fff,
+    81.94vw 96.22vh #fff,
+    57.03vw 17.15vh #fff,
+    86.78vw 97.38vh #fff,
+    70.4vw 50.89vh #fff,
+    37.8vw 34.69vh #fff,
+    20.58vw 67.42vh #fff,
+    43.3vw 19.41vh #fff,
+    10.44vw 66.6vh #fff,
+    29.61vw 49.98vh #fff,
+    32.53vw 87.16vh #fff,
+    89.97vw 1.81vh #fff,
+    20.09vw 32.77vh #fff,
+    98.7vw 78.27vh #fff,
+    33.91vw 21.3vh #fff,
+    67.45vw 83.77vh #fff,
+    93.22vw 34.38vh #fff,
+    88.24vw 68.71vh #fff,
+    48.45vw 98.55vh #fff,
+    23.46vw 72.55vh #fff,
+    8.47vw 16.97vh #fff,
+    91.1vw 21.3vh #fff,
+    75.91vw 60.02vh #fff,
+    84.11vw 36.81vh #fff,
+    34.03vw 29.12vh #fff,
+    86.74vw 60.4vh #fff,
+    95.43vw 88.73vh #fff,
+    13.53vw 55.12vh #fff,
+    10.43vw 3.91vh #fff,
+    7.32vw 86.62vh #fff,
+    78.81vw 82.85vh #fff,
+    34.09vw 61.52vh #fff,
+    78.19vw 37.8vh #fff,
+    57.08vw 22.37vh #fff,
+    8.17vw 26.67vh #fff,
+    89.08vw 56.44vh #fff,
+    92.51vw 45.78vh #fff,
+    27.72vw 78.7vh #fff,
+    82.78vw 1.24vh #fff,
+    67.04vw 9.17vh #fff,
+    11.51vw 88.51vh #fff,
+    4.0vw 23.96vh #fff,
+    98.82vw 42.1vh #fff,
+    11.56vw 16.74vh #fff,
+    24.14vw 74.4vh #fff,
+    10.28vw 91.08vh #fff,
+    37.83vw 97.03vh #fff,
+    90.92vw 29.4vh #fff,
+    25.34vw 47.7vh #fff,
+    10.01vw 65.21vh #fff;
+  animation: star-twinkle 3s ease-in-out infinite;
+}
+
+.star-layer.s2 {
+  width: 2px;
+  height: 2px;
+  box-shadow:
+    95.6vw 94.78vh #fff,
+    5.66vw 8.49vh #fff,
+    83.55vw 73.6vh #fff,
+    66.97vw 30.81vh #fff,
+    60.59vw 60.68vh #fff,
+    58.12vw 15.84vh #fff,
+    43.07vw 39.35vh #fff,
+    72.3vw 99.48vh #fff,
+    94.94vw 54.42vh #fff,
+    44.49vw 26.82vh #fff,
+    3.59vw 2.74vh #fff,
+    46.49vw 31.85vh #fff,
+    38.0vw 89.18vh #fff,
+    52.58vw 56.05vh #fff,
+    23.61vw 2.39vh #fff,
+    32.51vw 13.67vh #fff,
+    51.02vw 99.87vh #fff,
+    67.45vw 18.18vh #fff,
+    89.36vw 79.68vh #fff,
+    73.44vw 90.66vh #fff,
+    76.29vw 78.97vh #fff,
+    35.38vw 98.1vh #fff,
+    96.19vw 16.12vh #fff,
+    75.4vw 71.52vh #fff,
+    46.14vw 53.04vh #fff,
+    49.0vw 92.48vh #fff,
+    50.08vw 83.15vh #fff,
+    35.39vw 88.29vh #fff,
+    89.97vw 46.1vh #fff,
+    56.77vw 92.03vh #fff,
+    72.38vw 48.66vh #fff,
+    22.18vw 32.47vh #fff,
+    69.96vw 16.61vh #fff,
+    90.79vw 26.81vh #fff,
+    91.14vw 30.96vh #fff,
+    95.74vw 70.62vh #fff,
+    50.42vw 51.77vh #fff,
+    65.14vw 58.79vh #fff,
+    31.18vw 20.78vh #fff,
+    51.19vw 93.42vh #fff,
+    62.33vw 7.54vh #fff,
+    82.04vw 72.59vh #fff,
+    90.77vw 19.14vh #fff,
+    74.48vw 5.88vh #fff,
+    65.29vw 27.31vh #fff,
+    22.66vw 87.55vh #fff,
+    10.63vw 52.24vh #fff,
+    85.39vw 24.48vh #fff,
+    21.05vw 88.06vh #fff,
+    42.29vw 71.7vh #fff,
+    3.19vw 36.24vh #fff,
+    17.19vw 67.28vh #fff,
+    8.29vw 95.46vh #fff,
+    2.53vw 72.94vh #fff,
+    2.11vw 25.57vh #fff,
+    81.34vw 15.71vh #fff,
+    18.37vw 69.15vh #fff,
+    38.56vw 4.32vh #fff,
+    99.0vw 15.14vh #fff,
+    3.63vw 34.42vh #fff,
+    61.52vw 74.25vh #fff,
+    11.31vw 33.72vh #fff,
+    3.08vw 44.87vh #fff,
+    76.6vw 73.99vh #fff,
+    90.2vw 75.57vh #fff,
+    86.24vw 70.53vh #fff,
+    47.28vw 22.55vh #fff,
+    66.08vw 31.63vh #fff,
+    10.2vw 44.78vh #fff,
+    87.48vw 12.75vh #fff,
+    58.5vw 39.3vh #fff,
+    51.48vw 14.38vh #fff,
+    95.97vw 25.91vh #fff,
+    60.61vw 41.98vh #fff,
+    1.8vw 55.8vh #fff,
+    14.06vw 5.68vh #fff,
+    3.36vw 16.12vh #fff,
+    9.59vw 63.51vh #fff,
+    50.83vw 98.35vh #fff,
+    93.41vw 99.45vh #fff,
+    23.25vw 44.47vh #fff,
+    25.08vw 59.12vh #fff,
+    62.42vw 80.02vh #fff,
+    70.95vw 25.66vh #fff,
+    42.3vw 52.62vh #fff,
+    0.48vw 3.55vh #fff,
+    40.87vw 11.12vh #fff,
+    72.38vw 24.09vh #fff,
+    9.98vw 18.18vh #fff,
+    23.15vw 21.74vh #fff;
+  animation: star-twinkle 4.5s ease-in-out infinite 0.8s;
+}
+
+.star-layer.s3 {
+  width: 3px;
+  height: 3px;
+  box-shadow:
+    23.8vw 54.42vh #fff,
+    37.0vw 60.39vh #fff,
+    62.57vw 6.55vh #fff,
+    1.32vw 83.75vh #fff,
+    25.94vw 23.43vh #fff,
+    99.56vw 47.03vh #fff,
+    83.65vw 47.64vh #fff,
+    63.91vw 15.06vh #fff,
+    63.49vw 86.8vh #fff,
+    52.32vw 74.13vh #fff,
+    67.14vw 6.4vh #fff,
+    75.82vw 59.11vh #fff,
+    30.13vw 3.1vh #fff,
+    86.55vw 47.27vh #fff,
+    71.88vw 87.88vh #fff,
+    71.41vw 92.11vh #fff,
+    39.5vw 80.09vh #fff,
+    44.46vw 93.56vh #fff,
+    87.89vw 9.75vh #fff,
+    13.6vw 21.7vh #fff,
+    96.55vw 43.62vh #fff,
+    62.66vw 30.1vh #fff,
+    50.72vw 38.59vh #fff,
+    35.09vw 58.51vh #fff,
+    58.43vw 90.42vh #fff,
+    68.2vw 92.89vh #fff,
+    85.64vw 99.1vh #fff,
+    67.13vw 16.31vh #fff,
+    86.06vw 96.46vh #fff,
+    90.47vw 56.91vh #fff,
+    71.38vw 21.11vh #fff,
+    83.16vw 57.35vh #fff,
+    28.5vw 6.35vh #fff,
+    85.39vw 98.98vh #fff,
+    8.85vw 80.06vh #fff,
+    41.05vw 15.08vh #fff,
+    29.39vw 76.88vh #fff,
+    87.28vw 4.42vh #fff,
+    61.45vw 4.49vh #fff,
+    71.84vw 33.1vh #fff,
+    88.09vw 98.06vh #fff,
+    50.54vw 99.85vh #fff,
+    30.97vw 7.7vh #fff,
+    59.98vw 3.14vh #fff,
+    19.74vw 40.79vh #fff,
+    61.05vw 15.62vh #fff,
+    4.24vw 86.78vh #fff,
+    31.38vw 95.87vh #fff,
+    89.67vw 37.78vh #fff,
+    46.04vw 52.01vh #fff;
+  animation: star-twinkle 5.5s ease-in-out infinite 1.6s, star-drift 60s linear infinite;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+@keyframes star-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2vh); }
+}
+
+@media (max-width: 900px) {
+  .bg-logo-glow { width: min(85vw, 85vh); height: min(85vw, 85vh); opacity: 0.08; }
 }

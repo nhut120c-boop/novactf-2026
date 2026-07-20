@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<link rel="icon" href="/ball.png" />
+<link rel="icon" href="/img/logo.jpg" />
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>NovaCTF 🚀</title>
@@ -79,13 +79,41 @@
   .solve-time { opacity: 0.6; font-size: 12px; }
   .scoreboard-name-link { cursor: pointer; text-decoration: underline dotted; }
   .scoreboard-name-link:hover { opacity: 0.8; }
+  .warmup-card {
+    border: 2px solid #fbbf24 !important;
+    box-shadow: 0 0 18px rgba(251,191,36,0.35);
+    position: relative;
+  }
+  .warmup-card::before {
+    content: '⚡ WARM UP';
+    position: absolute;
+    top: -11px;
+    left: 12px;
+    background: #fbbf24;
+    color: #1e1b4b;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+  }
+  .warmup-note { color: #fff; opacity: 0.85; margin-top: 12px; font-size: 14px; }
+  .warmup-choices { display: flex; gap: 10px; margin-top: 14px; }
+  .warmup-choices button { flex: 1; }
 </style>
 </head>
 <body>
 
+<div class="bg-fx" aria-hidden="true">
+  <div class="star-layer s3"></div>
+  <div class="star-layer s2"></div>
+  <div class="star-layer s1"></div>
+  <div class="bg-logo-glow"></div>
+</div>
+
 <div id="auth-screen" class="auth-screen">
   <div class="auth-card">
-    <div class="auth-logo">🌌🛡️🚀</div>
+    <div class="auth-logo"><img src="/img/logo.jpg" alt="NovaRun Security Team" /></div>
     <h1>NovaCTF</h1>
     <p class="auth-sub">Giải mã. Xâm nhập. Chinh phục.</p>
 
@@ -113,7 +141,7 @@
 
 <div id="full-lock-overlay" class="full-lock-overlay hidden">
   <div class="full-lock-box">
-    <div class="full-lock-logo">🌌🛡️🚀</div>
+    <div class="full-lock-logo"><img src="/img/logo.jpg" alt="NovaRun Security Team" /></div>
     <h1>NovaCTF sắp bắt đầu!</h1>
     <p id="full-lock-msg">Giải sẽ mở lúc <b>08:00 21/07/2026</b>. Quay lại đúng giờ nhé!</p>
     <div class="full-lock-timer" id="full-lock-timer">--:--:--:--</div>
@@ -122,7 +150,7 @@
 
 <div id="app" class="app hidden">
   <header class="topbar">
-    <div class="brand">🌌 <span>NovaCTF</span></div>
+    <div class="brand"><img src="/img/logo.jpg" alt="NovaRun Security Team" /> <span>NovaCTF</span></div>
     <nav class="nav-tabs">
       <button class="nav-btn active" data-view="rules">📜 Rules</button>
       <button class="nav-btn" data-view="challenges">🎯 Challenge</button>
@@ -235,6 +263,21 @@
       <h4>🏁 Đã giải (<span id="solvers-count">0</span>)</h4>
       <ul id="solvers-list" class="simple-list"></ul>
     </div>
+  </div>
+</div>
+
+<!-- Modal: warm up (chỉ ở client, không lưu DB) -->
+<div id="warmup-modal" class="modal hidden">
+  <div class="modal-box">
+    <button class="modal-close" id="warmup-modal-close">✕</button>
+    <span class="badge-cat">Warm Up</span>
+    <h3>🔥 Khởi động</h3>
+    <p id="warmup-question" class="modal-desc">Bạn có thích Messi không?</p>
+    <div id="warmup-choices" class="warmup-choices">
+      <button id="warmup-yes" class="btn-primary">Có</button>
+      <button id="warmup-no" class="btn-primary">Không</button>
+    </div>
+    <div id="warmup-result" class="submit-result"></div>
   </div>
 </div>
 

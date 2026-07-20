@@ -330,7 +330,71 @@ function renderLockBanner(unlocked, totalCount) {
   }
 }
 
+// ---------------- WARM UP (chỉ ở client, KHÔNG lưu database) ----------------
+// Đây chỉ là 1 câu hỏi vui để "mở khóa" giao diện xem toàn bộ challenge thật,
+// không liên quan gì tới điểm/scoreboard/API — cố tình không đụng tới backend.
+const WARMUP_KEY = 'novactf_warmup_solved';
+
+function isWarmupSolved() {
+  return localStorage.getItem(WARMUP_KEY) === '1';
+}
+function setWarmupSolved() {
+  localStorage.setItem(WARMUP_KEY, '1');
+}
+
+function renderWarmupGate() {
+  const grid = document.getElementById('challenge-grid');
+  grid.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'chall-card warmup-card';
+  card.innerHTML = `
+    <h4>🔥 Khởi động</h4>
+    <div class="meta-row"><span>by NovaCTF</span><span class="points-badge">Bắt buộc</span></div>
+  `;
+  card.onclick = openWarmupModal;
+  grid.appendChild(card);
+
+  const note = document.createElement('p');
+  note.className = 'warmup-note';
+  note.textContent = '👆 Làm xong challenge khởi động này để mở khóa toàn bộ challenge nhé!';
+  grid.appendChild(note);
+}
+
+function openWarmupModal() {
+  document.getElementById('warmup-question').classList.remove('hidden');
+  document.getElementById('warmup-choices').classList.remove('hidden');
+  const resultBox = document.getElementById('warmup-result');
+  resultBox.textContent = '';
+  resultBox.className = 'submit-result';
+  document.getElementById('warmup-modal').classList.remove('hidden');
+}
+
+document.getElementById('warmup-modal-close').onclick = () =>
+  document.getElementById('warmup-modal').classList.add('hidden');
+
+document.getElementById('warmup-no').onclick = () => {
+  setWarmupSolved();
+  document.getElementById('warmup-question').classList.add('hidden');
+  document.getElementById('warmup-choices').classList.add('hidden');
+  const resultBox = document.getElementById('warmup-result');
+  resultBox.className = 'submit-result ok';
+  resultBox.textContent = '🐐 Chuẩn không cần chỉnh! Flag: NVR{ilove_CR7}';
+  showToast('🔥 Đã mở khóa toàn bộ challenge!');
+  renderCategories();
+  renderChallenges();
+};
+
+document.getElementById('warmup-yes').onclick = () => {
+  document.getElementById('warmup-modal').classList.add('hidden');
+  showToast('🚫 Thích Messi thì mời về home!');
+  switchView('rules');
+};
+
 function renderCategories() {
+  if (!isWarmupSolved()) {
+    document.getElementById('category-filter').innerHTML = '';
+    return;
+  }
   const cats = ['all', ...new Set(state.challenges.map((c) => c.category))];
   const box = document.getElementById('category-filter');
   box.innerHTML = '';
@@ -344,6 +408,10 @@ function renderCategories() {
 }
 
 function renderChallenges() {
+  if (!isWarmupSolved()) {
+    renderWarmupGate();
+    return;
+  }
   const grid = document.getElementById('challenge-grid');
   grid.innerHTML = '';
   const list = state.challenges.filter(
