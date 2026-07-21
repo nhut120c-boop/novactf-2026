@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const { query, queryOne } = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { getDynamicPointsMap } = require('../utils/scoring');
 
 const router = express.Router();
 
@@ -17,22 +18,26 @@ router.get('/', requireAuth, async (req, res, next) => {
     );
     if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
 
-    // Điểm chính thức: chỉ tính solve trước CONTEST_END.
-    const scoreRow = await queryOne(
-      `SELECT COALESCE(SUM(c.points),0)::int AS score, COUNT(*)::int AS solved_count
-       FROM solves s JOIN challenges c ON c.id = s.challenge_id
-       WHERE s.user_id = $1 AND s.solved_at < $2`,
-      [user.id, CONTEST_END]
-    );
+    // Điểm chính thức: chỉ tính solve trước CONTEST_END, dùng điểm ĐỘNG live
+    // (khớp scoreboard.js), không phải điểm gốc cố định của challenge.
+    const pointsMap = await getDynamicPointsMap(CONTEST_END);
 
     // Danh sách hiển thị cho chính chủ: vẫn show TẤT CẢ (kể cả solve sau giờ kết thúc,
     // để họ theo dõi tiến độ "luyện tập"), nhưng đánh dấu counted=false cho phần không tính điểm.
-    const solved = await query(
+    const solvedRows = await query(
       `SELECT c.id, c.title, c.category, c.points, s.solved_at, (s.solved_at < $2) AS counted
        FROM solves s JOIN challenges c ON c.id = s.challenge_id
        WHERE s.user_id = $1 ORDER BY s.solved_at DESC`,
       [user.id, CONTEST_END]
     );
+    // Với solve được tính điểm, hiện điểm động thật; với solve "luyện tập" sau giờ kết
+    // thúc, hiện điểm gốc chỉ để tham khảo (không cộng vào score).
+    const solved = solvedRows.map((r) => ({
+      ...r,
+      points: r.counted ? (pointsMap.get(r.id) ?? r.points) : r.points,
+    }));
+    const score = solved.filter((r) => r.counted).reduce((sum, r) => sum + r.points, 0);
+    const solved_count = solved.filter((r) => r.counted).length;
 
     const created = await query(
       'SELECT id, title, category, points, created_at FROM challenges WHERE created_by = $1 ORDER BY created_at DESC',
@@ -41,8 +46,8 @@ router.get('/', requireAuth, async (req, res, next) => {
 
     res.json({
       user,
-      score: scoreRow.score,
-      solved_count: scoreRow.solved_count,
+      score,
+      solved_count,
       solved,
       created,
     });
@@ -61,22 +66,21 @@ router.get('/view/:username', requireAuth, async (req, res, next) => {
     );
     if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
 
-    // Điểm công khai cũng chỉ tính solve trước CONTEST_END, khớp với scoreboard.
-    const scoreRow = await queryOne(
-      `SELECT COALESCE(SUM(c.points),0)::int AS score, COUNT(*)::int AS solved_count
-       FROM solves s JOIN challenges c ON c.id = s.challenge_id
-       WHERE s.user_id = $1 AND s.solved_at < $2`,
-      [user.id, CONTEST_END]
-    );
+    // Điểm công khai cũng chỉ tính solve trước CONTEST_END, dùng điểm ĐỘNG live,
+    // khớp với scoreboard.js và profile của chính chủ.
+    const pointsMap = await getDynamicPointsMap(CONTEST_END);
 
     // Danh sách bài đã giải hiện công khai: chỉ nên show phần ĐƯỢC TÍNH ĐIỂM
     // (tránh lộ ra rằng người đó có "solve luyện tập" sau giờ kết thúc — không cần thiết cho người ngoài xem).
-    const solved = await query(
+    const solvedRows = await query(
       `SELECT c.id, c.title, c.category, c.points, s.solved_at
        FROM solves s JOIN challenges c ON c.id = s.challenge_id
        WHERE s.user_id = $1 AND s.solved_at < $2 ORDER BY s.solved_at DESC`,
       [user.id, CONTEST_END]
     );
+    const solved = solvedRows.map((r) => ({ ...r, points: pointsMap.get(r.id) ?? r.points }));
+    const score = solved.reduce((sum, r) => sum + r.points, 0);
+    const solved_count = solved.length;
 
     res.json({
       user: {
@@ -85,8 +89,8 @@ router.get('/view/:username', requireAuth, async (req, res, next) => {
         avatar: user.avatar,
         created_at: user.created_at,
       },
-      score: scoreRow.score,
-      solved_count: scoreRow.solved_count,
+      score,
+      solved_count,
       solved,
     });
   } catch (e) {

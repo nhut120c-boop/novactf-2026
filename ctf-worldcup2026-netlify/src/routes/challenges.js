@@ -7,6 +7,7 @@ const sanitizeHtml = require('sanitize-html');
 const { query, queryOne } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { hashFlag, verifyFlag } = require('../utils/flag');
+const { calcDynamicPoints } = require('../utils/scoring');
 const { uploadChallengeFile, getSignedDownloadUrl, deleteChallengeFile } = require('../utils/storage');
 
 const router = express.Router();
@@ -68,13 +69,14 @@ router.get('/', requireAuth, async (req, res, next) => {
     }
 
     const ownOnlyClause = !isUnlocked() ? 'AND c.created_by = $2' : '';
-    const params = !isUnlocked() ? [req.user.uid, req.user.uid] : [req.user.uid];
+    const cutoffParam = !isUnlocked() ? '$3' : '$2';
+    const params = !isUnlocked() ? [req.user.uid, req.user.uid, CONTEST_END] : [req.user.uid, CONTEST_END];
 
     const rows = await query(
       `SELECT c.id, c.title, c.description, c.category, c.points, c.difficulty,
               c.file_name, c.link, c.created_at, c.created_by, u.display_name AS author, u.username AS author_username,
               EXISTS(SELECT 1 FROM solves s WHERE s.challenge_id = c.id AND s.user_id = $1) AS solved,
-              (SELECT COUNT(*) FROM solves s2 WHERE s2.challenge_id = c.id) AS solve_count
+              (SELECT COUNT(*) FROM solves s2 WHERE s2.challenge_id = c.id AND s2.solved_at < ${cutoffParam}) AS solve_count
        FROM challenges c
        JOIN users u ON u.id = c.created_by
        WHERE c.is_visible = true ${ownOnlyClause}
@@ -204,7 +206,26 @@ router.post(
       if (!correct) return res.json({ ok: true, correct: false, message: 'Sai flag rồi, thử lại nhé!' });
 
       await query('INSERT INTO solves (user_id, challenge_id) VALUES ($1,$2)', [req.user.uid, chall.id]);
-      res.json({ ok: true, correct: true, message: `Chính xác! +${chall.points} điểm` });
+
+      // Sau CONTEST_END: vẫn cho solve (để luyện tập) nhưng KHÔNG tính vào điểm/bảng
+      // xếp hạng (khớp logic ở scoreboard.js/profile.js lọc theo solved_at < CONTEST_END).
+      if (isEnded()) {
+        return res.json({
+          ok: true,
+          correct: true,
+          message: 'Chính xác! (Đã hết giờ tính điểm nên bài này không được cộng vào bảng xếp hạng)',
+        });
+      }
+
+      // Điểm động: tính LIVE theo đúng số lượt giải hợp lệ NGAY SAU khi solve này được ghi
+      // nhận, dùng chung công thức với src/utils/scoring.js (khớp scoreboard/profile) và
+      // với public/js/app.js (khớp số hiển thị trên card).
+      const solveCountRow = await queryOne(
+        'SELECT COUNT(*)::int AS c FROM solves WHERE challenge_id = $1 AND solved_at < $2',
+        [chall.id, CONTEST_END]
+      );
+      const awarded = calcDynamicPoints(chall.points, solveCountRow.c);
+      res.json({ ok: true, correct: true, message: `Chính xác! +${awarded} điểm` });
     } catch (e) {
       next(e);
     }

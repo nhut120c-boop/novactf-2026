@@ -1,1 +1,23 @@
-.env 
+# Biến môi trường thật (DATABASE_URL, secret key...) — TUYỆT ĐỐI không push lên git.
+# Chỉ .env.example (không chứa giá trị thật) mới được commit.
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Netlify
+.netlify/
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

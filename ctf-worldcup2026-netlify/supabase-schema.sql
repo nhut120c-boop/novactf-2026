@@ -13,8 +13,13 @@ CREATE TABLE IF NOT EXISTS users (
   avatar        TEXT NOT NULL DEFAULT '⚽',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   failed_logins INTEGER NOT NULL DEFAULT 0,
-  locked_until  TIMESTAMPTZ
+  locked_until  TIMESTAMPTZ,
+  is_bot        BOOLEAN NOT NULL DEFAULT false -- true = tài khoản bot tự động solve (scripts/seed-bots.js)
 );
+
+-- Nếu bạn ĐÃ chạy schema này trên Supabase trước đó (chưa có cột is_bot),
+-- chạy thêm lệnh này 1 lần trong SQL Editor để bổ sung cột mà không mất dữ liệu:
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS is_bot BOOLEAN NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS challenges (
   id           BIGSERIAL PRIMARY KEY,
